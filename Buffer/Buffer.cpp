@@ -4,8 +4,6 @@
 
 #include "Buffer.h"
 
-#include "Buffer.h"
-
 Buffer::Buffer() = default;
 
 std::string Buffer::remTabs(std::string line)

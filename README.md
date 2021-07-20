@@ -1,8 +1,24 @@
 # **N(cursed) Text Editor**
 Command line text editor, vim inspired.
 
-Usage:
+After compiled, it can be used as followed:
+```
+./smk-cursed       -- when ommited, will save as 'untitled'
+./smk-cursed <filename>       
+```
 
+Supported modes:
+```
+Normal: as in Vim, currently only works as navigation.
+Insert: as any other text editor.
+```
+Keybinds:
+```
+'i': when in Normal mode, it will put you in Insert mode.
+'x': when in Normal mode, it will exit, without saving what you have changed.
+'s': when in Normal mode, it will save the changes you made.
+ESC: when in Insert mode, it will put you in Normal mode.
+```
 
 Road map:
 - [x] Files
