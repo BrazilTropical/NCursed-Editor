@@ -6,8 +6,10 @@
 #define TEXT_EDITOR_EDITOR_H
 
 #include <ncurses.h>
-#include "Buffer.h"
+#include "../Buffer/Buffer.h"
 
+#define BACKGROUND_COLOR 1
+#define TEXT_COLOR 2
 
 class Editor {
 

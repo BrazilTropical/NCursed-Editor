@@ -183,6 +183,13 @@ void Editor::moveLeft()
     x--;
     move(y, x);
   }
+  else if(y > 0)
+  {
+    y--;
+    x = buffer->lines[y].length();
+    move(y, x);
+  }
+
 }
 
 void Editor::moveRight()
@@ -190,6 +197,12 @@ void Editor::moveRight()
   if(x + 1 < COLS && x + 1 <= buffer->lines[y].length())
   {
     x++;
+    move(y, x);
+  }
+  else if(x + 1 < COLS && x + 1 > buffer->lines[y].length() && y + 1 < LINES - 1)
+  {
+    x = 0;
+    y++;
     move(y, x);
   }
 }

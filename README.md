@@ -1,6 +1,9 @@
 # **N(cursed) Text Editor**
 Command line text editor, vim inspired.
 
+Usage:
+
+
 Road map:
 - [x] Files
 - [x] Colors (ncurses)

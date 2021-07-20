@@ -1,8 +1,7 @@
 #include <ncurses.h>
 #include <string>
 #include <vector>
-#include "Editor.h"
-
+#include "Editor/Editor.h"
 
 void curses_init()
 {
@@ -10,13 +9,7 @@ void curses_init()
   noecho();                       // Don't echo keystrokes
   cbreak();                       // Disable line buffering
   keypad(stdscr, true);           // Enable special keys to be recorded
-  start_color();
 
-  init_pair(1, COLOR_BLACK, COLOR_RED);
-  init_pair(2, COLOR_BLACK, COLOR_GREEN);
-
-  attron(COLOR_PAIR(1));
-  attron(COLOR_PAIR(2));
   refresh();
 }
 
