@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#define TAB_SIZE 2
+
 class Buffer
 {
 public:
@@ -15,11 +17,11 @@ public:
 
     std::vector<std::string> lines;
 
-    void insertLine(std::string, int);
-    void appendLine(std::string);
-    void removeLine(int);
+    void insert_line(std::string, int);
+    void append_line(std::string);
+    void remove_line(int);
 
-    std::string remTabs(std::string);
+    std::string remove_tabs(std::string);
 };
 
 #endif //TEXT_EDITOR_BUFFER_H

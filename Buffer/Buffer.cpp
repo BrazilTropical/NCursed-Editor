@@ -6,31 +6,31 @@
 
 Buffer::Buffer() = default;
 
-std::string Buffer::remTabs(std::string line)
+std::string Buffer::remove_tabs(std::string line)
 {
-  int tab = line.find("\t");
+  std::size_t tab = line.find('\t');
 
   if(tab == line.npos)
     return line;
 
-  return remTabs(line.replace(tab, 1, "  "));
+  return remove_tabs(line.replace(tab, 1, ">>"));
 }
 
-void Buffer::insertLine(std::string line, int n)
+void Buffer::insert_line(std::string line, int n)
 {
-  line = remTabs(line);
+  line = remove_tabs(line);
 
   Buffer::lines.insert(Buffer::lines.begin() + n, line);
 }
 
-void Buffer::appendLine(std::string line)
+void Buffer::append_line(std::string line)
 {
-  line = remTabs(line);
+  line = remove_tabs(line);
 
   Buffer::lines.push_back(line);
 }
 
-void Buffer::removeLine(int n)
+void Buffer::remove_line(int n)
 {
   Buffer::lines.erase(Buffer::lines.begin() + n);
 }
