@@ -7,17 +7,23 @@
 
 #include <ncurses.h>
 #include "../Buffer/Buffer.h"
-#include "Cursor.h"
 #include <string>
 
 #define BACKGROUND_COLOR 1
 #define TEXT_COLOR 2
 
+struct Cursor
+{
+    int x;
+    int y;
+};
+
 class Editor {
 
 private:
     Cursor cursor {0, 0};
-    int rows, columns;
+    int start_print_index = 0;
+    int line_numbering_offset = 0;
     bool is_modified;
 
     char mode;
@@ -43,9 +49,6 @@ public:
     explicit Editor(const std::string&);
 
     char get_mode() const { return mode; }
-
-    void set_columns(const int& col) { this->columns = col; }
-    void set_rows(const int& row) { this->rows = row; }
 
     void handle_input(int);
     void print_buffer();

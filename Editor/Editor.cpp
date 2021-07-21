@@ -15,7 +15,6 @@
 Editor::Editor()
 {
   cursor.x = 0, cursor.y = 0;
-  rows = 0, columns = 0;
   is_modified = false;
   mode ='n';
 
@@ -29,7 +28,7 @@ Editor::Editor()
 Editor::Editor(const std::string& filename)
 {
   cursor.x = 0, cursor.y = 0;
-  rows = 0, columns = 0;
+
   is_modified = false;
   mode = 'n';
 
@@ -66,7 +65,7 @@ void Editor::update_status()
     case 'x': status = "Exiting";     break;
   }
 
-  status += "\t" + std::to_string(cursor.x) + ":" + std::to_string(cursor.y);
+  status += "\t" + std::to_string(cursor.x) + ":" + std::to_string(cursor.y) + ":" + std::to_string(start_print_index);
 }
 
 void Editor::handle_input(int c)
@@ -120,6 +119,19 @@ void Editor::handle_input(int c)
           move_back_word(); break;
         case 'w':
           move_word(); break;
+
+        case '-':
+          if(line_numbering_offset > 0)
+          {
+            line_numbering_offset--;
+            cursor.x--;
+          }
+          break;
+        case '+':
+          line_numbering_offset++;
+          cursor.x++;
+
+          break;
       }
       break;
 
@@ -130,25 +142,25 @@ void Editor::handle_input(int c)
 
         case KEY_BACKSPACE:
         case KEY_BACKSPACE2:
-          if(!cursor.x && cursor.y > 0)
+          if(!cursor.x && cursor.y + start_print_index > 0)
           {
-            cursor.x = buffer->lines[cursor.y - 1].length();
+            cursor.x = buffer->lines[cursor.y - 1 + start_print_index].length();
             //bring line down
-            buffer->lines[cursor.y - 1] += buffer->lines[cursor.y];
+            buffer->lines[cursor.y + start_print_index - 1] += buffer->lines[cursor.y + start_print_index];
             delete_line();
             move_up();
           }
           else if(cursor.x)
           {
-            buffer->lines[cursor.y].erase(--cursor.x, 1);
+            buffer->lines[cursor.y + start_print_index].erase(--cursor.x, 1);
           }
           break;
 
-        case KEY_DC:
+        case KEY_DC: //Delete key
           if(cursor.x == buffer->lines[cursor.y].length() && cursor.y != buffer->lines.size() - 1)
           {
             buffer->lines[cursor.y] += buffer->lines[cursor.y + 1];
-            delete_line((int) cursor.y + 1);
+            delete_line(cursor.y + 1);
           }
           else
           {
@@ -158,17 +170,17 @@ void Editor::handle_input(int c)
 
         case KEY_ENTER:
         case KEY_LINEFEED:
-          if(cursor.x < buffer->lines[cursor.y].length())
+          if(cursor.x < buffer->lines[cursor.y + start_print_index].length())
           {
             //make a new line with the content followed by the cursor
-            buffer->insert_line(buffer->lines[cursor.y].substr(cursor.x, buffer->lines[cursor.y].length() - cursor.x),
-                                (int) cursor.y + 1);
+            buffer->insert_line(buffer->lines[cursor.y + start_print_index].substr(cursor.x, buffer->lines[cursor.y + start_print_index].length() - cursor.x),
+                                cursor.y + start_print_index + 1);
             //remove that part of the line
-            buffer->lines[cursor.y].erase(cursor.x, buffer->lines[cursor.y].length() - cursor.x);
+            buffer->lines[cursor.y + start_print_index].erase(cursor.x, buffer->lines[cursor.y + start_print_index].length() - cursor.x);
           }
           else
           {
-            buffer->insert_line("", (int) cursor.y + 1);
+            buffer->insert_line("", cursor.y + start_print_index + 1);
           }
 
           cursor.x = 0;
@@ -185,7 +197,7 @@ void Editor::handle_input(int c)
           break;
 
         default:
-          buffer->lines[cursor.y].insert(cursor.x, 1, char(c));
+          buffer->lines[cursor.y + start_print_index].insert(cursor.x, 1, char(c));
           cursor.x++;
           break;
       }
@@ -198,13 +210,13 @@ void Editor::move_left()
   if(cursor.x - 1 >= 0)
   {
     cursor.x--;
-    move((int) cursor.y, (int) cursor.x);
+    move(cursor.y, cursor.x);
   }
   else if(cursor.y > 0)
   {
     cursor.y--;
-    cursor.x = buffer->lines[cursor.y].length();
-    move((int) cursor.y, (int) cursor.x);
+    cursor.x = (int) buffer->lines[cursor.y].length();
+    move(cursor.y, cursor.x);
   }
 
 }
@@ -214,37 +226,42 @@ void Editor::move_right()
   if(cursor.x + 1 <= buffer->lines[cursor.y].length())
   {
     cursor.x++;
-    move((int) cursor.y, (int) cursor.x);
+    move(cursor.y, cursor.x);
   }
   else if(cursor.x + 1 > buffer->lines[cursor.y].length() && cursor.y + 1 < buffer->lines.size() - 1)
   {
     cursor.x = 0;
     cursor.y++;
-    move((int) cursor.y, (int) cursor.x);
+    move(cursor.y, cursor.x);
   }
 }
 
 void Editor::move_up()
 {
-  if(cursor.y - 1 >= 0)
+  if(!cursor.y && start_print_index > 0)
+    start_print_index--;
+
+  if(cursor.y + start_print_index - 1 >= 0)
     cursor.y--;
 
-  if(cursor.x >= buffer->lines[cursor.y].length())
-    cursor.x = buffer->lines[cursor.y].length();
+  if(cursor.x >= buffer->lines[cursor.y + start_print_index].length())
+    cursor.x =  buffer->lines[cursor.y + start_print_index].length();
 
-  move((int) cursor.y, (int) cursor.x);
+  move(cursor.y + start_print_index, cursor.x);
 }
 
 void Editor::move_down()
 {
-  if(cursor.y + 1 <= buffer->lines.size())
+  if(cursor.y + 2 >= LINES  && cursor.y + start_print_index + 1 < buffer->lines.size())
+    start_print_index++;
+
+  if(cursor.y + 1 < LINES - 1 && cursor.y + 1 <= buffer->lines.size())
     cursor.y++;
 
   if(cursor.x >= buffer->lines[cursor.y].length())
-    cursor.x = buffer->lines[cursor.y].length();
+    cursor.x = (int) buffer->lines[cursor.y].length();
 
-  move((int) cursor.y, (int) cursor.x);
-  refresh();
+  move(cursor.y, cursor.x);
 }
 
 //Moves to previous encounter of SPACE
@@ -252,7 +269,7 @@ void Editor::move_down()
 //It's fine by now...
 void Editor::move_back_word()
 {
-  std::size_t prev_space_x = buffer->lines[cursor.y].find_last_of(' ', cursor.x);
+  int prev_space_x = buffer->lines[cursor.y].find_last_of(' ', cursor.x);
 
   if(prev_space_x <= 0 || (prev_space_x > cursor.x && cursor.y > 0))
     cursor.y--;
@@ -263,19 +280,36 @@ void Editor::move_back_word()
 //Same as above, but we get the next encounter of SPACE
 void Editor::move_word()
 {
-  std::size_t next_space_x = buffer->lines[cursor.y].find_first_of(' ', cursor.x);
+  int first_space_x = buffer->lines[cursor.y + start_print_index].find_first_of(' ', cursor.x);
+  for(int i = cursor.x; i < buffer->lines[cursor.y + start_print_index].size(); ++i)
+  {
+    int first_found = buffer->lines[cursor.y + start_print_index].find_first_of(' ', i);
+    int second_found = buffer->lines[cursor.y + start_print_index].find_first_of(' ', i + 1);
 
-  if(next_space_x < cursor.x && cursor.y < LINES - 1)
+    if(first_found + 1 == second_found)
+      continue;
+
+    first_space_x = first_found;
+    break;
+  }
+
+  if(first_space_x < cursor.x && cursor.y < LINES - 1)
   {
     cursor.y++;
   }
+  else if(first_space_x < cursor.x && cursor.y >= LINES - 1)
+  {
+    cursor.y--;
+    start_print_index++;
+  }
 
-  cursor.x = next_space_x + 1;
+  cursor.x = first_space_x + 1;
 }
 
 void Editor::print_buffer()
 {
-  for(int i = 0; i < LINES - 1; ++i)
+  auto start_print = start_print_index;
+  for(int i = 0; i < LINES - 1; ++i, start_print++)
   {
     if(i >= buffer->lines.size())
     {
@@ -284,13 +318,14 @@ void Editor::print_buffer()
     }
     else
     {
-      mvprintw(i, 0, buffer->lines[i].c_str());
+      mvprintw(i, line_numbering_offset, buffer->lines[start_print].c_str());
     }
 
     clrtoeol();
   }
 
-  move((int) cursor.y, (int) cursor.x);
+
+  move(cursor.y, cursor.x);
 }
 
 void Editor::print_status_line()
@@ -303,7 +338,7 @@ void Editor::print_status_line()
 
 void Editor::delete_line()
 {
-  buffer->remove_line((int) cursor.y);
+  buffer->remove_line(cursor.y + start_print_index);
 }
 
 void Editor::delete_line(int i)
@@ -333,7 +368,6 @@ void Editor::save_file()
   {
     status = "Error: Cannot open file for writing!";
   }
-
 
   f.close();
 }
