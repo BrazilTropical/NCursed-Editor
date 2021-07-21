@@ -1,7 +1,7 @@
 # **N(cursed) Text Editor**
 Command line text editor, vim inspired.
 
-After compiled, it can be used as followed:
+After compiled, it can be used as follows:
 ```
 ./smk-cursed       -- when ommited, will save as 'untitled'
 ./smk-cursed <filename>       
