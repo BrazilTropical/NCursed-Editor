@@ -142,13 +142,18 @@ void Editor::handle_input(int c)
 
         case KEY_BACKSPACE:
         case KEY_BACKSPACE2:
-          if(!cursor.x && cursor.y + start_print_index > 0)
+          if(!cursor.x && cursor.y > 0)
           {
             cursor.x = buffer->lines[cursor.y - 1 + start_print_index].length();
             //bring line down
             buffer->lines[cursor.y + start_print_index - 1] += buffer->lines[cursor.y + start_print_index];
             delete_line();
             move_up();
+          }
+          else if(!cursor.x && !cursor.y && start_print_index)
+          {
+            cursor.y++;
+            start_print_index--;
           }
           else if(cursor.x)
           {
@@ -157,14 +162,15 @@ void Editor::handle_input(int c)
           break;
 
         case KEY_DC: //Delete key
-          if(cursor.x == buffer->lines[cursor.y].length() && cursor.y != buffer->lines.size() - 1)
+          if(cursor.x == buffer->lines[cursor.y + start_print_index].length() &&
+             cursor.y + start_print_index != buffer->lines.size() - 1)
           {
-            buffer->lines[cursor.y] += buffer->lines[cursor.y + 1];
-            delete_line(cursor.y + 1);
+            buffer->lines[cursor.y + start_print_index] += buffer->lines[cursor.y + start_print_index + 1];
+            delete_line(cursor.y + start_print_index + 1);
           }
           else
           {
-            buffer->lines[cursor.y].erase(cursor.x, 1);
+            buffer->lines[cursor.y + start_print_index].erase(cursor.x, 1);
           }
           break;
 
@@ -238,16 +244,16 @@ void Editor::move_right()
 
 void Editor::move_up()
 {
-  if(!cursor.y && start_print_index > 0)
+  if(cursor.y == 0 && start_print_index - cursor.y > 0)
     start_print_index--;
 
-  if(cursor.y + start_print_index - 1 >= 0)
+  if(cursor.y > 0)
     cursor.y--;
 
   if(cursor.x >= buffer->lines[cursor.y + start_print_index].length())
     cursor.x =  buffer->lines[cursor.y + start_print_index].length();
 
-  move(cursor.y + start_print_index, cursor.x);
+  move(cursor.y, cursor.x);
 }
 
 void Editor::move_down()
@@ -259,7 +265,7 @@ void Editor::move_down()
     cursor.y++;
 
   if(cursor.x >= buffer->lines[cursor.y].length())
-    cursor.x = (int) buffer->lines[cursor.y].length();
+    cursor.x = buffer->lines[cursor.y].length();
 
   move(cursor.y, cursor.x);
 }
@@ -269,17 +275,35 @@ void Editor::move_down()
 //It's fine by now...
 void Editor::move_back_word()
 {
-  int prev_space_x = buffer->lines[cursor.y].find_last_of(' ', cursor.x);
+  if(!(cursor.y + start_print_index))
+    return;
 
-  if(prev_space_x <= 0 || (prev_space_x > cursor.x && cursor.y > 0))
+  int first_prev_space_x = buffer->lines[cursor.y].find_last_of(' ', cursor.x);
+  for(int i = cursor.x; i >= 1; i--)
+  {
+    int first_found = buffer->lines[cursor.y + start_print_index].find_last_of(' ', i);
+    int second_found = buffer->lines[cursor.y + start_print_index].find_last_of(' ', i - 1);
+
+    if(first_found == second_found + 1)
+      continue;
+
+    first_prev_space_x = first_found + 1;
+    break;
+  }
+
+
+  if(first_prev_space_x <= 0 && cursor.y > 0|| (first_prev_space_x > cursor.x && cursor.y + start_print_index > 0))
     cursor.y--;
 
-  cursor.x = prev_space_x <= 0 ? buffer->lines[cursor.y].size() : prev_space_x - 1; //move to end of line or prev word
+  cursor.x = first_prev_space_x <= 0 ? buffer->lines[cursor.y + start_print_index].size() : first_prev_space_x - 1; //move to end of line or prev word
 }
 
 //Same as above, but we get the next encounter of SPACE
 void Editor::move_word()
 {
+  if(cursor.y + start_print_index == buffer->lines.size() - 1)
+    return;
+
   int first_space_x = buffer->lines[cursor.y + start_print_index].find_first_of(' ', cursor.x);
   for(int i = cursor.x; i < buffer->lines[cursor.y + start_print_index].size(); ++i)
   {
@@ -293,13 +317,12 @@ void Editor::move_word()
     break;
   }
 
-  if(first_space_x < cursor.x && cursor.y < LINES - 1)
+  if(first_space_x < cursor.x && cursor.y < LINES - 2)
   {
     cursor.y++;
   }
-  else if(first_space_x < cursor.x && cursor.y >= LINES - 1)
+  else if(first_space_x < cursor.x && cursor.y >= LINES - 2)
   {
-    cursor.y--;
     start_print_index++;
   }
 
@@ -318,7 +341,9 @@ void Editor::print_buffer()
     }
     else
     {
+      attron(COLOR_PAIR(1));
       mvprintw(i, line_numbering_offset, buffer->lines[start_print].c_str());
+      attroff(COLOR_PAIR(1));
     }
 
     clrtoeol();
@@ -371,3 +396,4 @@ void Editor::save_file()
 
   f.close();
 }
+

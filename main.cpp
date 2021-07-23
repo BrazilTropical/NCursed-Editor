@@ -11,6 +11,11 @@ void curses_init()
   cbreak();                       // Disable line buffering
   keypad(stdscr, true);           // Enable special keys to be recorded
 
+  start_color();
+  init_pair(1, COLOR_GREEN, COLOR_BLACK);
+  init_pair(2, COLOR_CYAN, COLOR_BLACK);
+
+
   refresh();
 }
 
